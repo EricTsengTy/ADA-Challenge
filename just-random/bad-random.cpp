@@ -7,7 +7,7 @@ int l, n;       // # of slices, # of jobs
 
 struct Operation{
     int s, d, p;
-    pii stat;   // start time, slice used(represented by bits)
+    pair<int, long long> stat;   // start time, slice used(represented by bits)
 };
 
 struct Job{
@@ -44,7 +44,7 @@ double machine(vector<Job> &jobs){
     }
     // a random generator
     mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
-    vector<int> timeline(10000, (1 << l) - 1);
+    vector<long long> timeline(100000, (1LL << l) - 1);
     while (!avails.empty()){
         // Pick an operation to execute randomly
         int idx = rng() % avails.size();
@@ -53,17 +53,19 @@ double machine(vector<Job> &jobs){
         int t = -1;
         // Find an appropriate place for the operation
         for (int i = cur.second; ; ++i){
-            int flag = (1 << l) - 1;
+            long long flag = (1LL << l) - 1;
             for (int j = 0; j != op.d && flag; ++j){
+                if (i + j > timeline.size()) cout << "ERROR" << ' ' << i + j << endl, exit(0);
                 flag &= timeline[i + j];
             }
+            cout << __builtin_popcount(flag) << ' ' << op.s << endl;
             if (__builtin_popcount(flag) >= op.s){
                 t = i;
                 break;
             }
         }
         // Pick which slices to use
-        op.stat = {t, (1 << l) - 1};
+        op.stat = {t, (1LL << l) - 1};
         for (int i = t; i != t + op.d; ++i)
             op.stat.second &= timeline[i];
         // Subtract extra slices (by keep removing the last 1 bit)
@@ -105,12 +107,13 @@ int main(){
     }
     vector<Job> max_t = jobs;
     double max_v = machine(max_t);
-    for (int i = 0; i != 200000; ++i){
+    for (int i = 0; i != 20000; ++i){
         vector<Job> test(jobs);
         double cur_v = machine(test);
         if (cur_v > max_v){
             max_v = cur_v;
             max_t = test;
+            cout << max_v << ' ' << i << endl;
         }
     }
     for (int i = 1; i <= n; ++i){
@@ -118,7 +121,7 @@ int main(){
             auto &stat = max_t[i].ops[j].stat;
             cout << stat.first;
             for (int k = 0; k != l; ++k)
-                if (stat.second & (1 << k))
+                if (stat.second & (1LL << k))
                     cout << ' ' << (k + 1);
             cout << '\n';
         }
