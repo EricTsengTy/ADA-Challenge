@@ -10,6 +10,10 @@
 
   A place for TA's checker
 
+* **best-answer**
+
+  A place to store the best output so far ?
+
 * **Others (just-random, ...)**
 
   "Maybe" each for a different kind of method to solve the problem
