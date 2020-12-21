@@ -14,7 +14,7 @@ struct Job{
     vector<Operation> ops;      // operations of the job
     vector<vector<int>> adj;    // use for topological order
     vector<int> lin;            // in degree of each node
-    int m, id;                 // # of ops, job's id
+    int m, id;                  // # of ops, job's id
     double w;                   // weight
 
     Job() = default;
@@ -53,11 +53,11 @@ double machine(vector<Job> &jobs){
         int t = -1;
         // Find an appropriate place for the operation
         for (int i = cur.second; ; ++i){
-            bool flag = true;
+            int flag = (1 << l) - 1;
             for (int j = 0; j != op.d && flag; ++j){
-                if (__builtin_popcount(timeline[i + j]) < op.s) flag = false;
+                flag &= timeline[i + j];
             }
-            if (flag){
+            if (__builtin_popcount(flag) >= op.s){
                 t = i;
                 break;
             }
@@ -105,7 +105,7 @@ int main(){
     }
     vector<Job> max_t = jobs;
     double max_v = machine(max_t);
-    for (int i = 0; i != 20000; ++i){
+    for (int i = 0; i != 200000; ++i){
         vector<Job> test(jobs);
         double cur_v = machine(test);
         if (cur_v > max_v){
