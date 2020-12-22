@@ -7,7 +7,8 @@ int l, n;       // # of slices, # of jobs
 
 struct Operation{
     int s, d, p;
-    pair<int, long long> stat;   // start time, slice used(represented by bits)
+    int st;                     // start time
+    int low_t = 0;              // lower bound of start time
 };
 
 struct Job{
@@ -34,38 +35,51 @@ struct Job{
     }
 };
 
+// Generate output from start time of each operation
+struct OGen{
+    int st, len, id, s;     // start time, duration, op_id, slice_needed, 
+    long long s_mask;       //slice_used(bitmask)
+    OGen (int st, int len, int s, int id):st(st),len(len),s(s),id(id),s_mask((1LL << l) - 1){};
+    bool operator<(const OGen &obj)const{
+        return st < obj.st;
+    }
+    bool operator>(const OGen &obj)const{
+        return id < obj.id;
+    }
+};
+
 double machine(vector<Job> &jobs){
-    // pair.first : {job_id, op_id}, pair.second = least start time
-    vector<pair<pii, int>> avails;
+    // pair.first : job_id, pair.second : op_id
+    vector<pii> avails;
     for (int i = 1; i <= n; ++i){
         for (int j = 1; j <= jobs[i].m; ++j)
             if (jobs[i].lin[j] == 0)
-                avails.emplace_back(pii(i, j), 0);
+                avails.emplace_back(i, j);
     }
     // a random generator
     mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
-    vector<long long> timeline(100000, (1LL << l) - 1);
+    vector<int> timeline(100000, l);
     while (!avails.empty()){
         // Pick an operation to execute randomly
         int idx = rng() % avails.size();
         auto cur = avails[idx];
-        auto &op = jobs[cur.first.first].ops[cur.first.second];
+        auto &op = jobs[cur.first].ops[cur.second];
         int t = -1;
         // Find an appropriate place for the operation
-        for (int i = cur.second; ; ++i){
-            long long flag = (1LL << l) - 1;
+        for (int i = op.low_t; ; ++i){
+            bool flag = true;
             for (int j = 0; j != op.d && flag; ++j){
-                if (i + j > timeline.size()) cout << "ERROR" << ' ' << i + j << endl, exit(0);
-                flag &= timeline[i + j];
+                if (i + j > timeline.size()) cout << "ERROR" << '\n';
+                if (timeline[i + j] < op.s) flag = false;
             }
-            cout << __builtin_popcount(flag) << ' ' << op.s << endl;
-            if (__builtin_popcount(flag) >= op.s){
+            if (flag){
                 t = i;
                 break;
             }
         }
         // Pick which slices to use
-        op.stat = {t, (1LL << l) - 1};
+        op.st = t;
+        /*
         for (int i = t; i != t + op.d; ++i)
             op.stat.second &= timeline[i];
         // Subtract extra slices (by keep removing the last 1 bit)
@@ -74,11 +88,15 @@ double machine(vector<Job> &jobs){
         // Subtract used slices from timeline
         for (int i = t; i != t + op.d; ++i)
             timeline[i] &= (~op.stat.second);
-        auto &job = jobs[cur.first.first];
-        for (auto &nxt : job.adj[cur.first.second]){
+        */
+        for (int i = t; i != t + op.d; ++i)
+            timeline[i] -= op.s;
+        auto &job = jobs[cur.first];
+        for (auto &nxt : job.adj[cur.second]){
+            job.ops[nxt].low_t = max(job.ops[nxt].low_t, t + op.d);
             if (--job.lin[nxt] == 0)
-                avails.emplace_back(pii(cur.first.first, nxt), t + op.d);
-        }   
+                avails.emplace_back(cur.first, nxt);
+        }
         avails.erase(avails.begin() + idx);
     }
     double max_v = 0;
@@ -86,14 +104,28 @@ double machine(vector<Job> &jobs){
     for (int i = 1; i <= n; ++i){
         double max_t = 0;
         for (int j = 1; j <= jobs[i].m; ++j){
-            auto &stat = jobs[i].ops[j].stat;
-            max_t = max(max_t, double(stat.first + jobs[i].ops[j].d));
+            int st = jobs[i].ops[j].st;
+            max_t = max(max_t, double(st + jobs[i].ops[j].d));
         }
         total += max_t * jobs[i].w;
         max_v = max(max_v, max_t);
     }
     total += max_v;
     return -total;
+}
+
+void genAns(vector<OGen> &all_ops){
+    sort(all_ops.begin(), all_ops.end());
+    vector<long long> timeline(100000, (1LL << l) - 1);
+    for (auto &op : all_ops){
+        for (int i = 0; i != op.len; ++i)
+            op.s_mask &= timeline[op.st + i];
+        while (__builtin_popcountll(op.s_mask) > op.s)
+            op.s_mask &= (op.s_mask - 1);
+        for (int i = 0; i != op.len; ++i)
+            timeline[op.st + i] &= (~op.s_mask);
+    }
+    sort(all_ops.begin(), all_ops.end(), greater<OGen>());
 }
 
 int main(){
@@ -113,19 +145,22 @@ int main(){
         if (cur_v > max_v){
             max_v = cur_v;
             max_t = test;
-            cout << max_v << ' ' << i << endl;
+            cerr << max_v << ' ' << i << endl;
         }
     }
-    for (int i = 1; i <= n; ++i){
-        for (int j = 1; j <= max_t[i].m; ++j){
-            auto &stat = max_t[i].ops[j].stat;
-            cout << stat.first;
-            for (int k = 0; k != l; ++k)
-                if (stat.second & (1LL << k))
-                    cout << ' ' << (k + 1);
-            cout << '\n';
+    vector<OGen> all_ops;
+    for (int i = 1, id = 0; i <= n; ++i){
+        for (int j = 1; j <= max_t[i].m; ++j, ++id){
+            auto &op = max_t[i].ops[j];
+            all_ops.emplace_back(op.st, op.d, op.s, id);
         }
     }
-    cout << max_v << '\n';
+    genAns(all_ops);
+    for (auto &op : all_ops){
+        cout << op.st;
+        for (int i = 0; i != l; ++i)
+            if (op.s_mask & (1LL << i)) cout << ' ' << i + 1;
+        cout << '\n';
+    }
     return 0;
 }
