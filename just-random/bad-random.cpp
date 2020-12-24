@@ -79,16 +79,6 @@ double machine(vector<Job> &jobs){
         }
         // Pick which slices to use
         op.st = t;
-        /*
-        for (int i = t; i != t + op.d; ++i)
-            op.stat.second &= timeline[i];
-        // Subtract extra slices (by keep removing the last 1 bit)
-        while (__builtin_popcount(op.stat.second) > op.s)
-            op.stat.second &= (op.stat.second - 1);
-        // Subtract used slices from timeline
-        for (int i = t; i != t + op.d; ++i)
-            timeline[i] &= (~op.stat.second);
-        */
         for (int i = t; i != t + op.d; ++i)
             timeline[i] -= op.s;
         auto &job = jobs[cur.first];
@@ -139,7 +129,7 @@ int main(){
     }
     vector<Job> max_t = jobs;
     double max_v = machine(max_t);
-    for (int i = 0; i != 20000; ++i){
+    for (int i = 0; i != 800000; ++i){
         vector<Job> test(jobs);
         double cur_v = machine(test);
         if (cur_v > max_v){
