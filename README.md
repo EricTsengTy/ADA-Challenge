@@ -1,5 +1,9 @@
 # ADA Challenge !
 
+### Record
+
+[進度紀錄](https://docs.google.com/document/d/1Ko1QBluMjhdMduN1B6q_NCM51fCDI0BO3MCLq-ojIjs/edit?usp=sharing)
+
 ### File & Directory
 
 * **public-test-cases**
