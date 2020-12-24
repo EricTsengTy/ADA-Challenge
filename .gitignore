@@ -4,6 +4,7 @@
 checker
 bad-random
 simple-by-weight
+weight-div-time
 
 # debug log file
 gdb_history
