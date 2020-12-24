@@ -3,4 +3,8 @@
 # Executables
 checker
 bad-random
+simple-by-weight
+
+# debug log file
 gdb_history
+peda-session*
