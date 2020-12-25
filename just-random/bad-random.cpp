@@ -1,52 +1,8 @@
 #include <bits/stdc++.h>
+#include "utils.h"
 
 using namespace std;
 using pii = pair<int, int>;
-
-int l, n;       // # of slices, # of jobs
-
-struct Operation{
-    int s, d, p;
-    int st;                     // start time
-    int low_t = 0;              // lower bound of start time
-};
-
-struct Job{
-    vector<Operation> ops;      // operations of the job
-    vector<vector<int>> adj;    // use for topological order
-    vector<int> lin;            // in degree of each node
-    int m, id;                  // # of ops, job's id
-    double w;                   // weight
-
-    Job() = default;
-    Job(int m, int id, double w):ops(m + 1), adj(m + 1), lin(m + 1, 0), m(m), id(id), w(w){
-        input_op();
-    };
-    void input_op(){
-        for (int i = 1; i <= m; ++i){
-            cin >> ops[i].s >> ops[i].d >> ops[i].p;
-            for (int j = 0; j != ops[i].p; ++j){
-                int a;
-                cin >> a;
-                adj[a].push_back(i);
-                ++lin[i];
-            }
-        }
-    }
-};
-
-// Generate output from start time of each operation
-struct OGen{
-    int st, len, id, s;     // start time, duration, op_id, slice_needed, 
-    long long s_mask;       //slice_used(bitmask)
-    OGen (int st, int len, int s, int id):st(st),len(len),s(s),id(id),s_mask((1LL << l) - 1){};
-    bool operator<(const OGen &obj)const{
-        return st < obj.st;
-    }
-    bool operator>(const OGen &obj)const{
-        return id < obj.id;
-    }
-};
 
 double machine(vector<Job> &jobs){
     // pair.first : job_id, pair.second : op_id
@@ -104,20 +60,6 @@ double machine(vector<Job> &jobs){
     return -total;
 }
 
-void genAns(vector<OGen> &all_ops){
-    sort(all_ops.begin(), all_ops.end());
-    vector<long long> timeline(100000, (1LL << l) - 1);
-    for (auto &op : all_ops){
-        for (int i = 0; i != op.len; ++i)
-            op.s_mask &= timeline[op.st + i];
-        while (__builtin_popcountll(op.s_mask) > op.s)
-            op.s_mask &= (op.s_mask - 1);
-        for (int i = 0; i != op.len; ++i)
-            timeline[op.st + i] &= (~op.s_mask);
-    }
-    sort(all_ops.begin(), all_ops.end(), greater<OGen>());
-}
-
 int main(){
     cin >> l >> n;
     vector<Job> jobs(n + 1);
@@ -129,7 +71,7 @@ int main(){
     }
     vector<Job> max_t = jobs;
     double max_v = machine(max_t);
-    for (int i = 0; i != 800000; ++i){
+    for (int i = 0; i != 20000; ++i){
         vector<Job> test(jobs);
         double cur_v = machine(test);
         if (cur_v > max_v){
@@ -139,18 +81,7 @@ int main(){
         }
     }
     vector<OGen> all_ops;
-    for (int i = 1, id = 0; i <= n; ++i){
-        for (int j = 1; j <= max_t[i].m; ++j, ++id){
-            auto &op = max_t[i].ops[j];
-            all_ops.emplace_back(op.st, op.d, op.s, id);
-        }
-    }
-    genAns(all_ops);
-    for (auto &op : all_ops){
-        cout << op.st;
-        for (int i = 0; i != l; ++i)
-            if (op.s_mask & (1LL << i)) cout << ' ' << i + 1;
-        cout << '\n';
-    }
+    genAns(max_t, all_ops);
+    outAns(all_ops);
     return 0;
 }

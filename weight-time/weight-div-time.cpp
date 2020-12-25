@@ -1,116 +1,10 @@
 #include <bits/stdc++.h>
-
+#include "utils.h"
 using namespace std;
 using pii = pair<int, int>;
 
-int l, n;       // # of slices, # of jobs
-
-struct Operation{
-    int s, d, p;
-    int st;                     // start time
-    int low_t = 0;              // lower bound of start time
-};
-
-struct Job{
-    vector<Operation> ops;      // operations of the job
-    vector<vector<int>> adj;    // use for topological order
-    vector<int> lin;            // in degree of each node
-    int m, id;                  // # of ops, job's id
-    double w;                   // weight
-    int min_t;                  // min time when only this job
-
-    Job() = default;
-    Job(int m, int id, double w):ops(m + 1), adj(m + 1), lin(m + 1, 0), m(m), id(id), w(w){
-        input_op();
-    };
-    bool operator<(const Job &obj)const{
-        return id < obj.id;
-    }
-    void input_op(){
-        for (int i = 1; i <= m; ++i){
-            cin >> ops[i].s >> ops[i].d >> ops[i].p;
-            for (int j = 0; j != ops[i].p; ++j){
-                int a;
-                cin >> a;
-                adj[a].push_back(i);
-                ++lin[i];
-            }
-        }
-    }
-    // Maybe change to random
-    void calc_min_t(){
-        Job job = *this;
-        min_t = 0;
-        vector<int> avails;
-        for (int j = 1; j <= m; ++j)
-            if (lin[j] == 0)
-                avails.emplace_back(j);
-        vector<int> timeline(100000, l);
-
-        while (!avails.empty()){
-            // Pick an operation to execute randomly (just pick 0)
-            int idx = 0;
-            auto cur = avails[idx];
-            auto &op = ops[cur];
-            int t = -1;
-            // Find an appropriate place for the operation
-            for (int i = op.low_t; ; ++i){
-                bool flag = true;
-                for (int j = 0; j != op.d && flag; ++j){
-                    if (i + j > timeline.size()) cout << "ERROR" << '\n';
-                    if (timeline[i + j] < op.s) flag = false;
-                }
-                if (flag){
-                    t = i;
-                    break;
-                }
-            }
-            // Pick which slices to use
-            op.st = t;
-            for (int i = t; i != t + op.d; ++i)
-                timeline[i] -= op.s;
-            for (auto &nxt : adj[cur]){
-                ops[nxt].low_t = max(ops[nxt].low_t, t + op.d);
-                if (--lin[nxt] == 0)
-                    avails.emplace_back(nxt);
-            }
-            avails.erase(avails.begin() + idx);
-            min_t = max(min_t, t + op.d - 1);
-        }
-        int tmp = min_t;
-        *this = job;
-        min_t = tmp;
-    }
-};
-
 bool cmp_weight_div_time(const Job &a, const Job &b){
     return a.w * b.min_t > b.w * a.min_t;
-}
-
-struct OGen{
-    int st, len, id, s;     // start time, duration, op_id, slice_needed, 
-    long long s_mask;       // slice_used(bitmask)
-    OGen (int st, int len, int s, int id):st(st),len(len),s(s),id(id),s_mask((1LL << l) - 1){};
-    bool operator<(const OGen &obj)const{
-        return st < obj.st;
-    }
-    bool operator>(const OGen &obj)const{
-        return id < obj.id;
-    }
-};
-
-void genAns(vector<OGen> &all_ops){
-    sort(all_ops.begin(), all_ops.end());
-    vector<long long> timeline(100000, (1LL << l) - 1);
-    for (auto &op : all_ops){
-        for (int i = 0; i != op.len; ++i)
-            op.s_mask &= timeline[op.st + i];
-        while (__builtin_popcountll(op.s_mask) > op.s)
-            op.s_mask &= (op.s_mask - 1);
-        for (int i = 0; i != op.len; ++i)
-            timeline[op.st + i] &= (~op.s_mask);
-    }
-    sort(all_ops.begin(), all_ops.end(), greater<OGen>());
 }
 
 double weight_time_first(vector<Job> &jobs){
@@ -120,7 +14,6 @@ double weight_time_first(vector<Job> &jobs){
         queue<int> avails;
         auto &job = jobs[i];
         for (int j = 1; j <= job.m; ++j){
-            auto &op = job.ops[j];
             if (job.lin[j] == 0)
                 avails.push(j);    //zzzzzzzxxxxvdsdhello
         }
@@ -177,18 +70,7 @@ int main(){
     double max_v = weight_time_first(max_t);
     cerr << max_v << '\n';
     vector<OGen> all_ops;
-    for (int i = 1, id = 0; i <= n; ++i){
-        for (int j = 1; j <= max_t[i].m; ++j, ++id){
-            auto &op = max_t[i].ops[j];
-            all_ops.emplace_back(op.st, op.d, op.s, id);
-        }
-    }
-    genAns(all_ops);
-    for (auto &op : all_ops){
-        cout << op.st;
-        for (int i = 0; i != l; ++i)
-            if (op.s_mask & (1LL << i)) cout << ' ' << i + 1;
-        cout << '\n';
-    }
+    genAns(max_t, all_ops);
+    outAns(all_ops);
     return 0;
 }
