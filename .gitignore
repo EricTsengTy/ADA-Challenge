@@ -7,5 +7,5 @@ simple-by-weight
 weight-div-time
 
 # debug log file
-gdb_history
+.gdb_history
 peda-session*
