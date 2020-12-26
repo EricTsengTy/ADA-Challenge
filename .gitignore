@@ -9,3 +9,6 @@ weight-div-time
 # debug log file
 .gdb_history
 peda-session*
+
+# vscode
+.vscode/

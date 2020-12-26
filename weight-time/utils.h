@@ -43,18 +43,18 @@ struct Job{
         }
     }
     /* (不太重要可以跳過，只是為了實作weight-div-time.cpp）試著算出當只有這個 job 要跑得時候，他要跑多久，並將這個值存在 min_t 裡 */
-    void calc_min_t(){
-        Job job = *this;
+    void _calc_min_t(bool be_random){
         min_t = 0;
         vector<int> avails;
         for (int j = 1; j <= m; ++j)
             if (lin[j] == 0)
                 avails.emplace_back(j);
         vector<int> timeline(100000, l);
+        mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
 
         while (!avails.empty()){
             // Pick an operation to execute randomly (just pick 0)
-            int idx = 0;
+            int idx = (be_random) ? rand() % avails.size() : 0;
             auto cur = avails[idx];
             auto &op = ops[cur];
             int t = -1;
@@ -82,9 +82,20 @@ struct Job{
             avails.erase(avails.begin() + idx);
             min_t = max(min_t, t + op.d - 1);
         }
-        int tmp = min_t;
-        *this = job;
-        min_t = tmp;
+    }
+    void calc_min_t(bool be_random){
+        if (!be_random){
+            Job job = *this;
+            job._calc_min_t(be_random);
+            this->min_t = job.min_t;
+            return;
+        }
+        this->min_t = INT32_MAX;
+        for (int i = 0; i != 1000; ++i){
+            Job job = *this;
+            job._calc_min_t(be_random);
+            this->min_t = min(this->min_t, job.min_t);
+        }
     }
 };
 

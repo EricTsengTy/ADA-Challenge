@@ -3,23 +3,26 @@
 using namespace std;
 using pii = pair<int, int>;
 
+mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+
+double delta;
 bool cmp_weight_div_time(const Job &a, const Job &b){
-    return a.w * b.min_t > b.w * a.min_t;
+    return (a.w + delta) * double(b.min_t) > (b.w + delta) * double(a.min_t);
 }
 
-double weight_time_first(vector<Job> &jobs){
+double weight_time_first(vector<Job> &jobs, bool be_random = true){
     sort(jobs.begin() + 1, jobs.end(), cmp_weight_div_time);
     vector<int> timeline(100000, l);
     for (int i = 1; i <= n; ++i){
-        queue<int> avails;
+        vector<int> avails;
         auto &job = jobs[i];
         for (int j = 1; j <= job.m; ++j){
             if (job.lin[j] == 0)
-                avails.push(j);    //zzzzzzzxxxxvdsdhello
+                avails.push_back(j);    //zzzzzzzxxxxvdsdhello
         }
         while (!avails.empty()){
-            int top = avails.front();
-            avails.pop();
+            int idx = (be_random) ? rng() % avails.size() : 0;
+            int top = avails[idx];
             auto &op = job.ops[top];
             int t = -1;
             for (int j = op.low_t; ; ++j){
@@ -37,8 +40,9 @@ double weight_time_first(vector<Job> &jobs){
             for (auto &nxt : job.adj[top]){
                 job.ops[nxt].low_t = max(job.ops[nxt].low_t, t + op.d);
                 if (--job.lin[nxt] == 0)
-                    avails.push(nxt);
+                    avails.push_back(nxt);
             }
+            avails.erase(avails.begin() + idx);
         }
     }
     sort(jobs.begin() + 1, jobs.end());
@@ -64,10 +68,22 @@ int main(){
         double w;
         cin >> m >> w;
         jobs[i] = Job(m, i, w);
-        jobs[i].calc_min_t();
+        jobs[i].calc_min_t(true);
     }
     vector<Job> max_t = jobs;
     double max_v = weight_time_first(max_t);
+    int pre_change = 0;
+    for (int i = 0; i < 100000 && (i - pre_change <= 5000); ++i){
+        delta = double(rng() % 100000000) * 0.00000004 - 2;
+        vector<Job> test(jobs);
+        double cur_v = weight_time_first(test);
+        if (cur_v > max_v){
+            pre_change = i;
+            max_v = cur_v;
+            max_t = test;
+            cerr << max_v << ' ' << i << endl;
+        }
+    }
     cerr << max_v << '\n';
     vector<OGen> all_ops;
     genAns(max_t, all_ops);
