@@ -5,13 +5,18 @@ using pii = pair<int, int>;
 
 mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
 
-double delta;
+double delta, delta2;
+
+bool cmp_weight_div_time_pow(const Job &a, const Job &b){
+    return (pow(a.w, delta) + delta2) * double(b.min_t) > (pow(b.w, delta) + delta2) * double(a.min_t);
+}
+
 bool cmp_weight_div_time(const Job &a, const Job &b){
     return (a.w + delta) * double(b.min_t) > (b.w + delta) * double(a.min_t);
 }
 
-double weight_time_first(vector<Job> &jobs, bool be_random = true){
-    sort(jobs.begin() + 1, jobs.end(), cmp_weight_div_time);
+double weight_time_first(vector<Job> &jobs, bool be_random = true, bool power = true){
+    sort(jobs.begin() + 1, jobs.end(), (power ? cmp_weight_div_time_pow : cmp_weight_div_time));
     vector<int> timeline(100000, l);
     for (int i = 1; i <= n; ++i){
         vector<int> avails;
@@ -74,7 +79,8 @@ int main(){
     double max_v = weight_time_first(max_t);
     int pre_change = 0;
     for (int i = 0; i < 100000 && (i - pre_change <= 5000); ++i){
-        delta = double(rng() % 100000000) * 0.00000004 - 2;
+        delta = (double(rng() % 100000000) * 0.00000004 - 1) * 3;
+        delta2 = (double(rng() % 100000000) * 0.00000004 - 2) * 0.25;
         vector<Job> test(jobs);
         double cur_v = weight_time_first(test);
         if (cur_v > max_v){
