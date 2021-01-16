@@ -42,7 +42,9 @@ double weight_time_first(vector<Job> &jobs, bool be_random = true, int state = 2
                 avails.push_back(j);    //zzzzzzzxxxxvdsdhello
         }
         while (!avails.empty()){
-            int idx = (be_random) ? rng() % avails.size() : 0;
+            int idx = 0;
+            for (int i = 0; i != avails.size(); ++i)
+                idx = (job.lout[avails[i]] > job.lout[avails[idx]]) ? i : idx;
             int top = avails[idx];
             auto &op = job.ops[top];
             int t = -1;

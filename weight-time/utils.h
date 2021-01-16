@@ -17,13 +17,14 @@ struct Operation{
 struct Job{
     vector<Operation> ops;      // operations of the job （紀錄每個 job 的 operations）
     vector<vector<int>> adj;    // use for topological order （利用圖中 adjacent list 的概念來處理 operations 之間的先後關係）
-    vector<int> lin;            // 用來紀錄一個 operation 還需要多少其他的 operations 做完才可以做，其實一開始就是 operation 的 p 的值
+    vector<int> lin;            // 用來紀錄一個 operation 還需要多少其他的 operations 做完才可以做，其實就是一開始 operation 的 p 的值
+    vector<int> lout;           // 跟 lin 相反
     int m, id;                  // # of ops, job's id （operations 的數目、job 的 id（id是按照輸入順序））
     double w;                   // weight
     int min_t;                  // min time when only this job
 
     Job() = default;
-    Job(int m, int id, double w):ops(m + 1), adj(m + 1), lin(m + 1, 0), m(m), id(id), w(w){
+    Job(int m, int id, double w):ops(m + 1), adj(m + 1), lin(m + 1, 0), lout(m + 1, 0), m(m), id(id), w(w){
         input_op();
     };
     /* 用來按照輸入順序排序 Job */
@@ -39,6 +40,7 @@ struct Job{
                 cin >> a;
                 adj[a].push_back(i);
                 ++lin[i];
+                ++lout[a];
             }
         }
     }
