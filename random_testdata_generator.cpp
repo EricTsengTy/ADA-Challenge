@@ -1,6 +1,7 @@
 #include <random>
 #include <iostream>
 #include <stdio.h>
+#include <vector>
 #define MAXV 20
 class JOB
 {
@@ -71,12 +72,17 @@ int main(int argc, char const *argv[])
 				if(jobs[i].matrix[j][k] == 1)
 					num_of_dep++;
 			}
-			fprintf(fp, "%d %d %d ", (int)rd_s(generator), (int)rd_d(generator), num_of_dep);
+			std::vector<int> output{(int)rd_s(generator), (int) rd_d(generator), num_of_dep};	
+			//fprintf(fp, "%d %d %d ", (int)rd_s(generator), (int)rd_d(generator), num_of_dep);
 			for(int k = 0; k < jobs[i].num_of_op; k++)
 			{
 				if(jobs[i].matrix[j][k] == 1)
-					fprintf(fp, "%d ", k);
+					output.push_back(k);
+					//fprintf(fp, "%d ", k);
 			}
+			fprintf(fp, "%d", output[0]);
+			for (int i = 1; i < output.size(); ++i)
+				fprintf(fp, " %d", output[i]);
 			fprintf(fp, "\n");
 		}
 	}
