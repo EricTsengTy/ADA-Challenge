@@ -20,7 +20,6 @@ struct Job{
     vector<int> lin;            // 用來紀錄一個 operation 還需要多少其他的 operations 做完才可以做，其實就是一開始 operation 的 p 的值
     vector<int> lout;           // 跟 lin 相反
     int m, id;                  // # of ops, job's id （operations 的數目、job 的 id（id是按照輸入順序））
-    int total_s = 0;            // 總共需要的 slice
     double w;                   // weight
     int min_t;                  // min time when only this job
 
@@ -36,7 +35,6 @@ struct Job{
     void input_op(){
         for (int i = 1; i <= m; ++i){
             cin >> ops[i].s >> ops[i].d >> ops[i].p;
-            total_s += ops[i].s;
             for (int j = 0; j != ops[i].p; ++j){
                 int a;
                 cin >> a;

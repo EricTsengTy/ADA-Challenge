@@ -19,8 +19,9 @@ bool cmp_weight_div_time(const Job &a, const Job &b){
     return (a.w + delta) * double(b.min_t) > (b.w + delta) * double(a.min_t);
 }
 
-double weight_time_first(vector<Job> &jobs, bool be_random = true, int state = 2){
+double weight_time_first(vector<Job> &jobs, bool be_random = true, int state = 1){
     if (state == 0){
+        delta = double(rng() % 100);
         sort(jobs.begin() + 1, jobs.end(), cmp_weight_div_time);
     }
     else if (state == 1){
@@ -93,6 +94,7 @@ int main(){
     }
     vector<Job> max_t = jobs;
     double max_v = weight_time_first(max_t);
+    cerr << max_v << ' ' << "start" << '\n';
     int pre_change = 0;
     for (int i = 0; i < 100000 && (i - pre_change <= 5000); ++i){
         vector<Job> test(jobs);
